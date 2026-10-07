@@ -1,0 +1,31 @@
+name: Build RocketZoom ASI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+
+      - name: Compile
+        shell: pwsh
+        run: |
+          $src = Get-ChildItem -Recurse -Filter RocketZoom.cpp | Select-Object -First 1
+          if (-not $src) { throw "RocketZoom.cpp nao encontrado" }
+          Set-Location $src.DirectoryName
+          cl /nologo /LD /O2 /MT /EHsc RocketZoom.cpp /Fe:RocketZoom.asi /link /DYNAMICBASE:NO
+          if ($LASTEXITCODE -ne 0) { throw "Falha na compilacao" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RocketZoom
+          path: |
+            **/RocketZoom.asi
+            **/RocketZoom.ini
